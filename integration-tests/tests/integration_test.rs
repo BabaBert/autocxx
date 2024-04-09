@@ -12386,6 +12386,38 @@ fn test_cpp_union_pod() {
     run_test_expect_fail("", hdr, quote! {}, &[], &["CorrelationId_t_"]);
 }
 
+#[test]
+fn test_issue_1370() {
+    let hdr = indoc! {"
+
+        template <typename T> class B{
+        public:
+            T& data;
+        };
+
+        class C{};
+
+        class A{
+            public:
+                B<C> data;
+            };
+
+        B<C>& getInner(A& outer){
+            return outer.data;
+        }
+   "};
+    let dir = quote! {
+        generate!("A")
+        generate!("B")
+        generate!("C")
+        concrete!("B<C>", B_C)
+
+        generate!("getInner")
+    };
+    run_test_ex("", hdr, quote! {}, dir, None, None, None);
+    // run_test("", hdr, rs, &[], &[]);
+}
+
 // Yet to test:
 // - Ifdef
 // - Out param pointers
