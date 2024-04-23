@@ -12387,7 +12387,7 @@ fn test_cpp_union_pod() {
 }
 
 #[test]
-fn test_issue_1370() {
+fn test_issue_1370a() {
     let hdr = indoc! {"
 
         template <typename T> class B{
@@ -12398,9 +12398,9 @@ fn test_issue_1370() {
         class C{};
 
         class A{
-            public:
-                B<C> data;
-            };
+        public:
+            B<C> data;
+        };
 
         B<C>& getInner(A& outer){
             return outer.data;
@@ -12415,7 +12415,149 @@ fn test_issue_1370() {
         generate!("getInner")
     };
     run_test_ex("", hdr, quote! {}, dir, None, None, None);
-    // run_test("", hdr, rs, &[], &[]);
+}
+
+#[test]
+fn test_issue_137b() {
+    let hdr = indoc! {"
+
+        template <typename T> class B{
+        public:
+            T& data;
+        };
+
+        class C{};
+
+        class A{
+        public:
+            B<C> data;
+        };
+
+        C& getInner(B<C>& outer){
+            return outer.data;
+        }
+   "};
+    let dir = quote! {
+        generate!("A")
+        generate!("B")
+        generate!("C")
+        concrete!("B<C>", B_C)
+
+        generate!("getInner")
+    };
+    run_test_ex("", hdr, quote! {}, dir, None, None, None);
+}
+
+#[test]
+fn test_issue_137c() {
+    let hdr = indoc! {"
+
+        class A{};
+
+        template <typename T> class B{
+        public:
+            A& data;
+        };
+
+        class C{};
+
+
+        A& getInner(B<C>& outer){
+            return outer.data;
+        }
+   "};
+    let dir = quote! {
+        generate!("A")
+        generate!("B")
+        generate!("C")
+        concrete!("B<C>", B_C)
+
+        generate!("getInner")
+    };
+    run_test_ex("", hdr, quote! {}, dir, None, None, None);
+}
+
+#[test]
+fn test_issue_137d() {
+    let hdr = indoc! {"
+    
+        class C{};
+
+        template <typename T> class B{
+        public:
+            C& data;
+        };
+        
+        class A{
+        public:
+            B<C>& data;
+        };
+
+        B<C>& getInner(A& outer){
+            return outer.data;
+        }
+   "};
+    let dir = quote! {
+        generate!("A")
+        generate!("B")
+        generate!("C")
+        concrete!("B<C>", B_C)
+
+        generate!("getInner")
+    };
+    run_test_ex("", hdr, quote! {}, dir, None, None, None);
+}
+
+#[test]
+fn test_issue_137e() {
+    let hdr = indoc! {"
+    
+        class C{};
+
+        class A{};
+
+        template <typename T> class B{
+        public:
+            C& data;
+        };
+
+        B<C>& getInner(B<A>& outer){
+            return reinterpret_cast<B<C>&>(outer);
+        }
+   "};
+    let dir = quote! {
+        generate!("A")
+        generate!("B")
+        generate!("C")
+        concrete!("B<C>", B_C)
+
+        generate!("getInner")
+    };
+    run_test_ex("", hdr, quote! {}, dir, None, None, None);
+}
+
+#[test]
+fn validate_issue_1370() {
+    let hdr = indoc! {"
+        class A{};
+    
+        class B{
+        public:
+            A& data;
+        };
+    
+    
+        A& getInner(B& outer){
+            return outer.data;
+        }
+    "};
+    let dir = quote! {
+        generate!("A")
+        generate!("B")
+
+        generate!("getInner")
+    };
+    run_test_ex("", hdr, quote! {}, dir, None, None, None);
 }
 
 // Yet to test:
